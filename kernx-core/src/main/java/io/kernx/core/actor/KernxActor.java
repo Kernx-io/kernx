@@ -4,6 +4,7 @@
  */
 package io.kernx.core.actor;
 
+import io.kernx.core.ai.AiProvider;
 import io.kernx.core.protocol.KernxPacket;
 import org.jctools.queues.MpscUnboundedArrayQueue;
 import java.util.Queue;
@@ -18,6 +19,7 @@ public class KernxActor {
     private final String id;
     // The "Ferrari" Queue (Multi-Producer, Single-Consumer)
     // No locks. No synchronization. Pure speed.
+    private final AiProvider brain = new AiProvider();
     private final Queue<KernxPacket> mailbox = new MpscUnboundedArrayQueue<>(1024);
     private volatile boolean running = true;
 
@@ -43,10 +45,15 @@ public class KernxActor {
     }
 
     private void process(KernxPacket packet) {
-        // This is where the Agent Logic will eventually live.
-        // For now, it just echoes what it hears.
         String msg = new String(packet.payload().array());
         System.out.println("[ACTOR " + id + "] 📨 Received: " + msg);
+        
+        // ASYNC AI CALL:
+        // The Actor asks the brain, but DOES NOT BLOCK.
+        // It can keep processing other messages while the brain thinks.
+        brain.prompt(msg).thenAccept(response -> {
+             System.out.println("[ACTOR " + id + "] 🧠 AI Thought: " + response);
+        });
     }
 
     public void send(KernxPacket packet) {
