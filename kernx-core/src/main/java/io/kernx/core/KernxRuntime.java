@@ -40,16 +40,15 @@ public class KernxRuntime {
 
     public void boot() {
         System.out.println("[INFO] Booting Kernel...");
-        
-        // 1. Start the Engine
         KernxDispatcher dispatcher = new KernxDispatcher();
         
-        // 2. Plug in the Adapter
-        // In the future, this will load from a config file (Dependency Injection)
-        var cliAdapter = new io.kernx.core.adapters.StdInAdapter();
-        cliAdapter.start(dispatcher);
+        // 1. Console Adapter (Keep this for debugging)
+        new io.kernx.core.adapters.StdInAdapter().start(dispatcher);
         
-        // Keep main alive
+        // 2. HTTP Adapter (The new Public Interface)
+        new io.kernx.core.adapters.HttpAdapter().start(dispatcher);
+        
+        // Keep alive
         try { Thread.sleep(Long.MAX_VALUE); } catch (InterruptedException e) {}
     }
 }
