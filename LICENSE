@@ -1,0 +1,37 @@
+BUSINESS SOURCE LICENSE 1.1
+
+a. Definitions
+
+"Licensor" means Kernx.
+
+"Software" means the Kernx Core and its source code.
+
+"Use" means copying, modifying, and distributing the Software, 
+but explicitly excludes offering the Software as a managed service, 
+SaaS, or hosted API where the Software generates revenue directly 
+from its execution.
+
+"Change Date" means January 30, 2030.
+
+"Change License" means the Apache License, Version 2.0.
+
+b. License Grant
+
+Subject to the text of this license, the Licensor grants you a 
+non-exclusive, worldwide, non-transferable license to Use the 
+Software for any purpose, EXCEPT for the "Excluded Purpose" defined below.
+
+c. Excluded Purpose
+
+The Excluded Purpose is:
+1. Offering the Software as a commercial "Managed Service" (e.g., "Kernx as a Service").
+2. Branding a commercial product where the primary value is the Software itself.
+
+d. Change Date
+
+On the Change Date, the License Grant automatically converts to the 
+Change License (Apache 2.0).
+
+e. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
