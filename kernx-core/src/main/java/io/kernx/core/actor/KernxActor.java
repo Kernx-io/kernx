@@ -5,6 +5,7 @@
 package io.kernx.core.actor;
 
 import io.kernx.core.protocol.KernxPacket;
+import io.kernx.core.state.ResultStore;
 import org.jctools.queues.MpscUnboundedArrayQueue;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,10 +52,16 @@ public class KernxActor {
         // 2. Build the Full Prompt (Context + New Task)
         String fullContext = "History: " + memory.toString() + "\nNew Task: " + msg;
 
-        // 3. Ask AI (Async)
+     // 3. Ask AI (Async)
+        // We pass the 'packet.id()' so we can link the Answer to the Request
+        String requestId = packet.id();
+        
         brain.prompt(fullContext).thenAccept(response -> {
-             // 4. Remember the AI's own answer too!
              memory.add("AI: " + response);
+             
+             // WRITE TO STORE:
+             ResultStore.INSTANCE.put(requestId, response);
+             
              System.out.println("[ACTOR " + id + "] 🧠 AI Thought: " + response);
         });
     }

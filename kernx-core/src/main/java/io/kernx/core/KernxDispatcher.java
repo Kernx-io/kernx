@@ -58,7 +58,14 @@ public class KernxDispatcher {
             var actor = registry.get(targetId);
             if (actor != null) {
                 // Forward to the Actor's private mailbox
-                actor.send(io.kernx.core.protocol.KernxPacket.create("Router", message.getBytes()));
+            	// FIX: We must provide ALL 5 arguments to the Record constructor
+            	actor.send(new io.kernx.core.protocol.KernxPacket(
+            	    packet.id(),                                    // 1. Keep the Original Ticket ID
+            	    "Router",                                       // 2. Source
+            	    java.time.Instant.now(),                        // 3. Timestamp (Required)
+            	    java.nio.ByteBuffer.wrap(message.getBytes()),   // 4. Payload
+            	    java.util.Collections.emptyMap()                // 5. Metadata (Required)
+            	));
             } else {
                 System.out.println("[KERNEL] ⚠️ 404 Agent Not Found: " + targetId);
             }

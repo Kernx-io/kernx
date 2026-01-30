@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpServer;
 import io.kernx.core.KernxDispatcher;
 import io.kernx.core.protocol.KernxPacket;
 import io.kernx.core.spi.KernxAdapter;
+import io.kernx.core.state.ResultStore;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +43,18 @@ public class HttpAdapter implements KernxAdapter {
                     String response = "{\"status\": \"accepted\", \"id\": \"" + packet.id() + "\"}";
                     exchange.sendResponseHeaders(202, response.length());
                     exchange.getResponseBody().write(response.getBytes(StandardCharsets.UTF_8));
+                } else if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                    String query = exchange.getRequestURI().getQuery();
+                    // Parse "id=abc" -> "abc"
+                    String id = (query != null && query.contains("=")) ? query.split("=")[1] : "";
+                    
+                    // Fetch from Store
+                    String answer = io.kernx.core.state.ResultStore.INSTANCE.get(id);
+                    
+                    // Send JSON Response
+                    String response = "{\"id\": \"" + id + "\", \"result\": \"" + answer + "\"}";
+                    exchange.sendResponseHeaders(200, response.length());
+                    exchange.getResponseBody().write(response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 } else {
                     exchange.sendResponseHeaders(405, -1); // Method Not Allowed
                 }
