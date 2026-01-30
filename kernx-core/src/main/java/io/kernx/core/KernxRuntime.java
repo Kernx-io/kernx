@@ -9,6 +9,8 @@ package io.kernx.core;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import io.kernx.core.protocol.KernxPacket;
+
 /**
  * The deterministic runtime entry point for the Kernx Platform.
  * This manages the lifecycle of the Virtual Thread Scheduler.
@@ -37,16 +39,17 @@ public class KernxRuntime {
     }
 
     public void boot() {
-        // This is the "Secret Sauce." 
-        // We do not use Platform Threads. We use Virtual Threads for everything.
-        ThreadFactory factory = Thread.ofVirtual().name("kernx-worker-", 0).factory();
+        System.out.println("[INFO] Booting Kernel...");
         
-        try (var executor = Executors.newThreadPerTaskExecutor(factory)) {
-            // Simulate starting the Agent Loop
-            executor.submit(() -> {
-                logger.log(System.Logger.Level.INFO, "Kernel started on Virtual Thread: " + Thread.currentThread());
-                // In the future, this is where the Event Loop lives.
-            });
-        }
+        // 1. Start the Engine
+        KernxDispatcher dispatcher = new KernxDispatcher();
+        
+        // 2. Plug in the Adapter
+        // In the future, this will load from a config file (Dependency Injection)
+        var cliAdapter = new io.kernx.core.adapters.StdInAdapter();
+        cliAdapter.start(dispatcher);
+        
+        // Keep main alive
+        try { Thread.sleep(Long.MAX_VALUE); } catch (InterruptedException e) {}
     }
 }
