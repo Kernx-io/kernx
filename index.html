@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kernx: The Deterministic AI Kernel. Stop orchestrating. Start computing.">
+    <title>KERNX</title>
+    <style>
+        :root {
+            /* The Palette of the Void */
+            --bg: #050505;
+            --text: #e0e0e0;
+            --dim: #555;
+            --accent: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            /* System Monospace Stack: Fast, Raw, Professional */
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* The Grid: 1 Column Mobile, 2 Columns Desktop */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            max-width: 900px;
+            width: 100%;
+            gap: 60px;
+            border-top: 1px solid var(--dim);
+            padding-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 200px 1fr;
+                /* Sidebar | Content */
+            }
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 40px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            max-width: 500px;
+        }
+
+        .meta {
+            color: var(--dim);
+            font-size: 12px;
+            margin-bottom: 40px;
+        }
+
+        /* The Links: Plain, Underlined, Raw */
+        a {
+            color: var(--text);
+            text-decoration: none;
+            border-bottom: 1px solid var(--dim);
+            transition: border-color 0.2s;
+            padding-bottom: 2px;
+        }
+
+        a:hover {
+            border-bottom: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* The Button: A simple box */
+        .btn {
+            display: inline-block;
+            border: 1px solid var(--text);
+            padding: 10px 20px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
+        }
+
+        /* Status Dot */
+        .status::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #00ff41;
+            /* Signal Green */
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="grid">
+        <aside>
+            <h1>Kernx_v1.0</h1>
+            <div class="meta">
+                <span class="status">SYSTEM ONLINE</span><br>
+                BUILD: 2026.1.0<br>
+                LATENCY: 0ms
+            </div>
+        </aside>
+
+        <section>
+            <p style="font-size: 24px; line-height: 1.4; color: var(--accent); margin-bottom: 40px;">
+                The user should never wait for the slowest byte.
+            </p>
+
+            <p>
+                We are building the deterministic execution engine for the next generation of AI agents.
+                We do not use microservices. We do not use locks. We do not use bloat.
+            </p>
+
+            <p>
+                Kernx runs on Java 25 Virtual Threads and lock-free memory queues.
+                It is capable of handling 100,000 stateful agents on a single core.
+            </p>
+
+            <p>
+                We are what we are: Simple. Fast. Sovereign.
+            </p>
+
+            <a href="https://github.com/Kernx-io/kernx" class="btn">
+                Initialize Repository_
+            </a>
+
+            <div style="margin-top: 80px; font-size: 12px; color: var(--dim);">
+                <a href="https://x.com/KernxSiva" style="border: none; margin-right: 20px;">X / TWITTER</a>
+                <a href="https://github.com/Kernx-io/kernx" style="border: none;">GITHUB</a>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>
