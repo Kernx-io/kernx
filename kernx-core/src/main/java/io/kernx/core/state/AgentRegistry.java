@@ -1,40 +1,41 @@
 /*
  * Copyright (c) 2026 Kernx. All rights reserved.
- * Licensed under the Business Source License 1.1.
  */
 package io.kernx.core.state;
 
 import io.kernx.core.actor.KernxActor;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AgentRegistry {
 
-    // Store the Living Actor, not just data
-    private final Map<String, KernxActor> activeActors = new ConcurrentHashMap<>();
+    private final AtomicInteger globalQueueDepth = new AtomicInteger(100);
+    private final Map<String, KernxActor> agents = new ConcurrentHashMap<>();
 
-    public void spawn(String agentId) {
-        if (activeActors.containsKey(agentId)) {
-            System.out.println("[REGISTRY] ⚠️ Agent " + agentId + " already exists!");
-            return;
-        }
-        // This launches the Virtual Thread immediately
-        KernxActor actor = new KernxActor(agentId);
-        activeActors.put(agentId, actor);
+    public void setGlobalQueueDepth(int depth) {
+        this.globalQueueDepth.set(depth);
+        System.out.println("[REGISTRY] ⚙️ System Policy Updated: Queue Depth = " + depth);
     }
 
-    public void kill(String agentId) {
-        KernxActor actor = activeActors.remove(agentId);
+    public void register(String agentId) {
+        int currentPolicy = globalQueueDepth.get();
+        agents.computeIfAbsent(agentId, id -> new KernxActor(id, currentPolicy));
+    }
+
+    public KernxActor get(String agentId) {
+        return agents.get(agentId);
+    }
+
+    public void remove(String agentId) {
+        KernxActor actor = agents.remove(agentId);
         if (actor != null) {
             actor.kill();
         }
     }
 
-    public KernxActor get(String agentId) {
-        return activeActors.get(agentId);
-    }
-    
-    public String dumpState() {
-        return "Active Actors: " + activeActors.keySet().toString();
+    // --- NEW METHOD (Fixes your Red Line) ---
+    public int count() {
+        return agents.size();
     }
 }

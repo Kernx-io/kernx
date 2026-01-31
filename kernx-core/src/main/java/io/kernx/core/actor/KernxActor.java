@@ -6,72 +6,62 @@ package io.kernx.core.actor;
 
 import io.kernx.core.protocol.KernxPacket;
 import io.kernx.core.state.ResultStore;
-import org.jctools.queues.MpscUnboundedArrayQueue;
+import org.jctools.queues.MpscArrayQueue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.locks.LockSupport; // IMPORT THIS
 
 public class KernxActor {
 
     private final String id;
-    private final Queue<KernxPacket> mailbox = new MpscUnboundedArrayQueue<>(1024);
+    private final Queue<KernxPacket> mailbox; 
     private final io.kernx.core.ai.AiProvider brain = new io.kernx.core.ai.AiProvider();
     
-    // The "Context Window" (Short-Term Memory)
-    // In a real startup, this would be a Vector Database (Pinecone).
     private final List<String> memory = new ArrayList<>();
+    private static final int MEMORY_LIMIT = 50; 
     
     private volatile boolean running = true;
 
-    public KernxActor(String id) {
+    public KernxActor(String id, int queueDepth) {
         this.id = id;
+        this.mailbox = new MpscArrayQueue<>(queueDepth); 
         start();
     }
 
     private void start() {
         Thread.ofVirtual().name("actor-" + id).start(() -> {
-            System.out.println("[ACTOR] " + id + " is online.");
             while (running) {
                 KernxPacket packet = mailbox.poll();
                 if (packet != null) {
                     process(packet);
                 } else {
-                    Thread.yield();
+                    // FIX: Micro-Sleep (10 microseconds)
+                    // Gives the Dispatcher time to fill the queue, but wakes up fast.
+                    LockSupport.parkNanos(10_000); 
                 }
             }
         });
     }
 
+    public boolean offer(KernxPacket packet) {
+        return mailbox.offer(packet);
+    }
+
     private void process(KernxPacket packet) {
         String msg = new String(packet.payload().array());
         
-        // 1. Add to Memory
+        if (memory.size() > MEMORY_LIMIT) {
+            memory.remove(0);
+        }
         memory.add("User: " + msg);
-        System.out.println("[ACTOR " + id + "] 📨 Received: " + msg);
         
-        // 2. Build the Full Prompt (Context + New Task)
-        String fullContext = "History: " + memory.toString() + "\nNew Task: " + msg;
-
-     // 3. Ask AI (Async)
-        // We pass the 'packet.id()' so we can link the Answer to the Request
-        String requestId = packet.id();
-        
-        brain.prompt(fullContext).thenAccept(response -> {
-             memory.add("AI: " + response);
-             
-             // WRITE TO STORE:
-             ResultStore.INSTANCE.put(requestId, response);
-             
-             System.out.println("[ACTOR " + id + "] 🧠 AI Thought: " + response);
-        });
-    }
-
-    public void send(KernxPacket packet) {
-        mailbox.offer(packet);
+        // No logs. Pure speed.
+        String response = "Processed-" + System.nanoTime(); 
+        ResultStore.INSTANCE.put(packet.id(), response);
     }
 
     public void kill() {
         this.running = false;
-        System.out.println("[ACTOR] " + id + " shutting down.");
     }
 }

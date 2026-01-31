@@ -6,74 +6,117 @@ package io.kernx.core;
 
 import io.kernx.core.protocol.KernxPacket;
 import io.kernx.core.state.AgentRegistry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import io.kernx.core.state.ResultStore;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.HexFormat;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class KernxDispatcher {
 
-    private final ExecutorService vThreadExecutor;
-    private final AgentRegistry registry;
+    private final AgentRegistry registry = new AgentRegistry();
+    private final Set<String> identityBlocklist = ConcurrentHashMap.newKeySet();
+    private final List<byte[]> binarySignatures = new CopyOnWriteArrayList<>();
+    private volatile boolean dpiEnabled = false; 
 
-    public KernxDispatcher() {
-        this.vThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
-        this.registry = new AgentRegistry();
-    }
+    private final AtomicLong totalRequests = new AtomicLong(0);
+    private final AtomicLong rejectedRequests = new AtomicLong(0);
+    private final AtomicLong blockedRequests = new AtomicLong(0);
+    private final Instant startTime = Instant.now();
 
     public void dispatch(KernxPacket packet) {
-        vThreadExecutor.submit(() -> process(packet));
-    }
+        totalRequests.incrementAndGet();
+        byte[] payload = packet.payload().array();
 
-    private void process(KernxPacket packet) {
-        String payload = new String(packet.payload().array());
-
-        // --- COMMAND: DEPLOY ---
-        if (payload.startsWith("DEPLOY")) {
-            String agentId = payload.substring(7).trim();
-            // FIX: Use 'spawn' instead of 'register'
-            registry.spawn(agentId);
-            System.out.println("[KERNEL] 🚀 DEPLOYED: " + agentId);
-        } 
-        
-        // --- COMMAND: KILL ---
-        else if (payload.startsWith("KILL")) {
-            String agentId = payload.substring(5).trim();
-            // FIX: Use 'kill' instead of 'unregister'
-            registry.kill(agentId);
-            System.out.println("[KERNEL] 💀 KILLED: " + agentId);
-        }
-        
-        // --- COMMAND: STATUS ---
-        else if (payload.equalsIgnoreCase("STATUS")) {
-            System.out.println("[KERNEL] 📊 STATE: " + registry.dumpState());
-        }
-
-        // --- COMMAND: MSG (Routing Logic) ---
-        else if (payload.startsWith("MSG")) {
-            String[] parts = payload.split(" ", 3);
-            if (parts.length < 3) return;
-            
-            String targetId = parts[1];
-            String message = parts[2];
-            
-            var actor = registry.get(targetId);
-            if (actor != null) {
-                // Forward to the Actor's private mailbox
-            	// FIX: We must provide ALL 5 arguments to the Record constructor
-            	actor.send(new io.kernx.core.protocol.KernxPacket(
-            	    packet.id(),                                    // 1. Keep the Original Ticket ID
-            	    "Router",                                       // 2. Source
-            	    java.time.Instant.now(),                        // 3. Timestamp (Required)
-            	    java.nio.ByteBuffer.wrap(message.getBytes()),   // 4. Payload
-            	    java.util.Collections.emptyMap()                // 5. Metadata (Required)
-            	));
-            } else {
-                System.out.println("[KERNEL] ⚠️ 404 Agent Not Found: " + targetId);
+        // --- LAYER 1: DEEP PACKET INSPECTION ---
+        if (dpiEnabled && !binarySignatures.isEmpty()) {
+            for (byte[] signature : binarySignatures) {
+                if (containsSequence(payload, signature)) {
+                    blockedRequests.incrementAndGet();
+                    // SILENCED LOG
+                    ResultStore.INSTANCE.put(packet.id(), "{\"error\": \"MALWARE_DETECTED\"}");
+                    throw new SecurityException("BINARY_SIGNATURE_BLOCK");
+                }
             }
         }
-        
-        // --- DATA INGEST ---
-        else {
-            System.out.println("[DATA] 💾 Processed " + packet.payload().limit() + " bytes");
+
+        String msg = new String(payload, StandardCharsets.UTF_8);
+
+        // --- LAYER 2: IDENTITY FIREWALL ---
+        String[] tokens = msg.split(" ");
+        if (tokens.length > 1) {
+            String targetAgent = tokens[1];
+            if (identityBlocklist.contains(targetAgent)) {
+                blockedRequests.incrementAndGet();
+                // SILENCED LOG
+                ResultStore.INSTANCE.put(packet.id(), "{\"error\": \"BLOCKED_BY_ADMIN\"}");
+                throw new SecurityException("BLOCKED_BY_ADMIN");
+            }
         }
+
+        // --- COMMANDS ---
+
+        if (msg.startsWith("MSG")) {
+            if (tokens.length < 3) return;
+            String agentId = tokens[1];
+            String message = msg.substring(msg.indexOf(tokens[2])); 
+
+            var actor = registry.get(agentId);
+            if (actor != null) {
+                var newPacket = new KernxPacket(
+                    packet.id(), "Router", Instant.now(), 
+                    ByteBuffer.wrap(message.getBytes()), Collections.emptyMap()
+                );
+
+                boolean accepted = actor.offer(newPacket);
+
+                if (!accepted) {
+                    rejectedRequests.incrementAndGet();
+                    // SILENCED LOG
+                    throw new IllegalStateException("ACTOR_OVERLOADED");
+                }
+                // SILENCED: System.out.println("[KERNEL] ➡️ Routed to: " + agentId);
+            } else {
+                ResultStore.INSTANCE.put(packet.id(), "AGENT_NOT_FOUND");
+            }
+        }
+
+        // Keep Control Plane logs (These are rare, so they are fine)
+        else if (msg.startsWith("STATS")) {
+            long uptime = java.time.Duration.between(startTime, Instant.now()).toSeconds();
+            String report = """
+                { "uptime": %d, "processed": %d, "rejected": %d, "active_agents": %d }
+                """.formatted(uptime, totalRequests.get(), rejectedRequests.get(), registry.count());
+            ResultStore.INSTANCE.put(packet.id(), report);
+        }
+        else if (msg.startsWith("DEPLOY")) {
+            registry.register(tokens[1]);
+            ResultStore.INSTANCE.put(packet.id(), "DEPLOY_SUCCESS");
+        }
+        else if (msg.startsWith("CONFIG")) {
+             // Config logic here (Keep it simple)
+        }
+        else if (msg.startsWith("BLOCK")) {
+            identityBlocklist.add(tokens[1]);
+            registry.remove(tokens[1]); 
+        }
+    }
+
+    private boolean containsSequence(byte[] source, byte[] match) {
+        if (match.length == 0 || source.length < match.length) return false;
+        for (int i = 0; i <= source.length - match.length; i++) {
+            boolean found = true;
+            for (int j = 0; j < match.length; j++) {
+                if (source[i + j] != match[j]) { found = false; break; }
+            }
+            if (found) return true;
+        }
+        return false;
     }
 }
