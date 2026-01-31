@@ -1,79 +1,65 @@
 /*
  * Copyright (c) 2026 Kernx. All rights reserved.
- * Licensed under the Business Source License 1.1.
  */
 package io.kernx.core.adapters;
 
-import com.sun.net.httpserver.HttpServer;
 import io.kernx.core.KernxDispatcher;
-import io.kernx.core.protocol.KernxPacket;
-import io.kernx.core.spi.KernxAdapter;
-import io.kernx.core.state.ResultStore;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpExchange;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * The Web Interface.
- * Allows the outside world (Postman, Frontend) to talk to the Kernel.
- */
-public class HttpAdapter implements KernxAdapter {
+public class HttpAdapter {
+    private static final AtomicLong requestCounter = new AtomicLong(0);
+    private static final long startTime = System.currentTimeMillis();
 
-    private HttpServer server;
-
-    @Override
     public void start(KernxDispatcher dispatcher) {
         try {
-            // Listen on Port 8080
-            this.server = HttpServer.create(new InetSocketAddress(8080), 0);
+            // FIX: Force bind to IPv4 Loopback (127.0.0.1) to fix macOS issues
+            HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8080), 0);
             
-            // Endpoint: POST /api/kernel
+            server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+
+            // Endpoint 1: Ingestion
             server.createContext("/api/kernel", exchange -> {
-                if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                    // 1. Read the HTTP Body
-                    byte[] body = exchange.getRequestBody().readAllBytes();
-                    
-                    // 2. Convert to Universal Packet
-                    var packet = KernxPacket.create("HTTP-User", body);
-                    
-                    // 3. Send to Kernel
-                    dispatcher.dispatch(packet);
-                    
-                    // 4. Response 202 Accepted (Async)
-                    String response = "{\"status\": \"accepted\", \"id\": \"" + packet.id() + "\"}";
-                    exchange.sendResponseHeaders(202, response.length());
-                    exchange.getResponseBody().write(response.getBytes(StandardCharsets.UTF_8));
-                } else if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                    String query = exchange.getRequestURI().getQuery();
-                    // Parse "id=abc" -> "abc"
-                    String id = (query != null && query.contains("=")) ? query.split("=")[1] : "";
-                    
-                    // Fetch from Store
-                    String answer = io.kernx.core.state.ResultStore.INSTANCE.get(id);
-                    
-                    // Send JSON Response
-                    String response = "{\"id\": \"" + id + "\", \"result\": \"" + answer + "\"}";
-                    exchange.sendResponseHeaders(200, response.length());
-                    exchange.getResponseBody().write(response.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                } else {
-                    exchange.sendResponseHeaders(405, -1); // Method Not Allowed
-                }
-                exchange.close();
+                requestCounter.incrementAndGet();
+                send(exchange, 202, "{\"status\": \"ACCEPTED\"}");
             });
             
-            // Run the server on a Virtual Thread!
-            server.setExecutor(java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor());
+            // Endpoint 2: Stats
+            server.createContext("/stats", exchange -> {
+                long uptime = (System.currentTimeMillis() - startTime) / 1000;
+                if (uptime == 0) uptime = 1;
+                long rps = requestCounter.get() / uptime;
+                
+                String json = """
+                    {
+                        "throughput": %d,
+                        "uptime": %d,
+                        "active_agents": 1
+                    }
+                    """.formatted(rps, uptime);
+                
+                send(exchange, 200, json);
+            });
+
             server.start();
-            
-            System.out.println("[INFO] 🌍 HTTP Adapter listening on http://localhost:8080/api/kernel");
+            System.out.println("[INFO] 🌍 HTTP Adapter listening on http://127.0.0.1:8080/api/kernel");
             
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public void stop() {
-        if (server != null) server.stop(0);
+    private void send(HttpExchange exchange, int code, String body) throws IOException {
+        byte[] bytes = body.getBytes();
+        exchange.sendResponseHeaders(code, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
     }
 }

@@ -42,13 +42,14 @@ public class KernxRuntime {
         System.out.println("[INFO] Booting Kernel...");
         KernxDispatcher dispatcher = new KernxDispatcher();
         
-        // 1. Console Adapter (Keep this for debugging)
-        new io.kernx.core.adapters.StdInAdapter().start(dispatcher);
-        
-        // 2. HTTP Adapter (The new Public Interface)
+        // -----------------------------------------------------
+        // FIX: Start the HTTP Server FIRST (So Python can connect)
+        // -----------------------------------------------------
         new io.kernx.core.adapters.HttpAdapter().start(dispatcher);
         
-        // Keep alive
-        try { Thread.sleep(Long.MAX_VALUE); } catch (InterruptedException e) {}
+        // -----------------------------------------------------
+        // THEN start the Console Listener (This blocks the thread)
+        // -----------------------------------------------------
+        new io.kernx.core.adapters.StdInAdapter().start(dispatcher);
     }
 }

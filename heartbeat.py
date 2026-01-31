@@ -1,62 +1,69 @@
 import time
+import requests
 import sys
-import requests # The only dependency you need
 
-# Configuration
-KERNEL_URL = "http://localhost:8080"
+# CONFIG: Matches your Java Engine
+KERNEL_URL = "http://127.0.0.1:8080"
 
 def check_pulse():
-    print(f"\n{'-'*50}")
+    print("-" * 60)
     print("🔌 CONNECTING TO KERNX ENGINE...")
-    print(f"{'-'*50}")
-    
-    # 1. Check if Java Engine is Running
+    print("-" * 60)
+
+    # 1. Initial Handshake
     try:
-        # Simple ping to your HTTP Adapter
-        response = requests.get(f"{KERNEL_URL}/health") 
-        if response.status_code != 200:
-            print("❌ KERNEL IS UNRESPONSIVE. (Is the Java JAR running?)")
-            sys.exit(1)
-    except requests.exceptions.ConnectionError:
-        print("❌ CONNECTION FAILED.")
-        print("   -> Please start the engine first: java -jar kernx-engine.jar")
+        # Get baseline stats
+        start_stats = requests.get(f"{KERNEL_URL}/stats").json()
+        print(f"✅ CONNECTION ESTABLISHED [{KERNEL_URL}]")
+        print(f"   (Engine Uptime: {start_stats.get('uptime')}s)")
+    except Exception:
+        print("❌ CONNECTION REFUSED. Is the engine running?")
         sys.exit(1)
 
-    print("✅ CONNECTION ESTABLISHED [LOCALHOST:8080]")
+    print("\n❤️  STREAMING REAL-TIME VELOCITY (Ctrl+C to stop)...")
+    print("-" * 60)
     
-    # 2. Deploy a Test Agent
-    print("\n🚀 DEPLOYING 'PROBE-01'...")
-    try:
-        # Assuming your API has a /deploy endpoint
-        payload = {"agent_id": "probe-01", "strategy": "deterministic"}
-        res = requests.post(f"{KERNEL_URL}/deploy", json=payload)
-        print(f"   STATUS: {res.status_code} {res.reason}")
-    except Exception as e:
-        print(f"   ⚠️  DEPLOY WARNING: {e}")
-
-    # 3. Stream Life (The Real Loop)
-    print("\n❤️  STREAMING VITAL SIGNS (Ctrl+C to stop)...")
-    print(f"{'-'*50}")
+    # Trackers for calculating Delta
+    prev_count = start_stats.get("throughput", 0) * start_stats.get("uptime", 1) # Reverse engineer total count
+    # Actually, let's just assume we start tracking NOW.
+    # To do this accurately without changing Java, we need to poll the raw counter.
+    # Since Java returns 'throughput' (avg), we can't get the raw count easily unless we tracked it differently.
     
-    start_time = time.time()
-    try:
-        while True:
-            # Fetch real stats from the engine
-            stats = requests.get(f"{KERNEL_URL}/stats").json()
+    # WAIT. The Java code calculates rps = count / uptime.
+    # We can reverse it: Total_Count = rps * uptime.
+    
+    while True:
+        try:
+            start_time = time.time()
             
-            # Extract metrics (adjust keys based on your actual JSON response)
-            reqs = stats.get('throughput', 0)
-            agents = stats.get('active_agents', 0)
-            uptime = int(time.time() - start_time)
+            # Fetch Stats
+            response = requests.get(f"{KERNEL_URL}/stats").json()
+            uptime = response.get("uptime", 1)
+            avg_rps = response.get("throughput", 0)
             
-            # The "Medical Monitor" Output
-            sys.stdout.write(f"\r[T+{uptime}s] THROUGHPUT: {reqs:,} req/s | AGENTS: {agents} | STATUS: ALIVE")
-            sys.stdout.flush()
+            # Reverse Calculate Total Requests (Approximate)
+            current_total = avg_rps * uptime
+            
+            # Calculate Instant Delta
+            # (This is rough because Java integers round down, but it shows the spikes)
+            instant_rps = current_total - prev_count
+            if instant_rps < 0: instant_rps = 0 # Handle jitter
+            
+            # Update previous
+            prev_count = current_total
+            
+            # The HUD
+            # We show BOTH: The solid Average and the Instant Spike
+            print(f"[T+{uptime}s] INSTANT: {int(instant_rps):>5} req/s  |  AVG: {avg_rps:>4} req/s  |  STATUS: FLOWING 🟢")
+            
             time.sleep(1)
             
-    except KeyboardInterrupt:
-        print("\n\n🛑 HEARTBEAT STOPPED.")
-        print("   The system remains active.")
+        except KeyboardInterrupt:
+            print("\n🛑 MONITOR STOPPED.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"⚠️ GLITCH: {e}")
+            time.sleep(1)
 
 if __name__ == "__main__":
     check_pulse()
