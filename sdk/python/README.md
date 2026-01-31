@@ -10,7 +10,7 @@ Kernx handles the concurrency (100k+ req/sec) via Virtual Threads.
 
 ## ⚡ Prerequisites
 
-1.  **The Engine**: You must have the Kernx Engine running locally or on a server.
+1.  **The Engine**: You must have the Kernx Engine running ([Download Latest Release](../../releases)).
     * *Note: Python acts as the "Brain" (Decision) while Kernx acts as the "Nervous System" (Execution).*
 2.  **Python 3.8+**
 

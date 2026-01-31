@@ -146,13 +146,7 @@ Tested on Apple Silicon M1 (100,000 concurrent requests):
 ⛔ Rejected: 0
 ```
 
-## ⚡ Performance
-| Client | Throughput | Notes |
-| :--- | :--- | :--- |
-| **Python SDK** | ~2,500 req/s | Single-threaded, Developer friendly |
-| **Wrk (HTTP)** | **83,000+ req/s** | 12 threads, 400 connections, M1 Air |
-| **Internal** | ~66,000 ops/s | Direct memory access |
----
+
 
 ## 📂 Project Structure
 
@@ -170,10 +164,30 @@ kernx-root/
 
 ---
 
+## 💰 Licensing
+
+Kernx is **free for developers, startups, and small businesses**.
+
+| Annual Revenue | License Type | Cost |
+| :--- | :--- | :--- |
+| **< $1M** | **Community** | **FREE** (Production Allowed) |
+| **$1M - $100M** | **Commercial** | **$5k/year** (per site) |
+| **> $100M** | **Enterprise** | **Contact Sales** |
+| **SaaS / Cloud Provider** | **OEM / Reseller** | **Contact Sales** |
+
+*No registration required for Community tier. We just appreciate a GitHub star!* ⭐
+
+**Need a commercial license?** Email **sales@kernx.io**
+
+**Definitions:**
+- **Production:** Running Kernx where it serves real user traffic or handles financial data
+- **Site:** A single logical deployment (multiple data centers = multiple sites)
+
+---
+
 ## © License
 
 **Business Source License 1.1**
 
-* Free for development and non-production use.
-* Production use requires a license key (contact sales@kernx.io).
-* Code becomes Open Source (Apache 2.0) after 4 years.
+* Code becomes **Open Source (Apache 2.0)** on **January 31, 2030** (4 years)
+* See [LICENSE](LICENSE) file for complete terms

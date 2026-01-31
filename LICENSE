@@ -1,37 +1,70 @@
 BUSINESS SOURCE LICENSE 1.1
 
-a. Definitions
+Licensed Work: Kernx
+Licensor: Kernx (Siva)
+Change Date: 2030-01-31
+Change License: Apache License, Version 2.0
 
-"Licensor" means Kernx.
+I. TERMS
+The Licensor hereby grants you the right to copy, modify, create derivative 
+works, redistribute, and make non-production use of the Licensed Work. 
+The Licensor may make an Additional Use Grant, above, permitting limited 
+production use.
 
-"Software" means the Kernx Core and its source code.
+II. ADDITIONAL USE GRANT
+Production use is permitted ONLY if the User meets one of the following conditions:
 
-"Use" means copying, modifying, and distributing the Software, 
-but explicitly excludes offering the Software as a managed service, 
-SaaS, or hosted API where the Software generates revenue directly 
-from its execution.
+1. FREE TIER: The User is an individual, registered non-profit organization 
+   (501(c)(3) or equivalent), registered not-for-profit organization, or 
+   for-profit entity with total annual gross revenue of less than $1,000,000 USD. 
+   
+   FREE TIER RESTRICTIONS: Free Tier users may use the Licensed Work for their 
+   own internal operations only. Offering the Licensed Work (or products 
+   substantially based on it) to third parties, whether as a service or as a 
+   distributable product, requires an OEM License regardless of whether such 
+   offering is free or paid.
+   
+   No registration or license agreement required for internal use.
 
-"Change Date" means January 30, 2030.
+2. COMMERCIAL TIER: The User has entered into a separate written Commercial 
+   License Agreement with Licensor. (Standard pricing: $5,000 USD per 
+   production site per year, applicable to entities with revenue between 
+   $1,000,000 and $100,000,000 USD).
 
-"Change License" means the Apache License, Version 2.0.
+3. ENTERPRISE TIER: The User has entered into a separate written Enterprise 
+   License Agreement with Licensor (required for entities with revenue 
+   exceeding $100,000,000 USD).
 
-b. License Grant
+4. OEM/MANAGED SERVICE: The User has entered into a separate written OEM 
+   License Agreement with Licensor. Required for:
+   
+   a) Offering the Licensed Work as a hosted or managed service to third parties
+   b) Distributing the Licensed Work or products substantially based on it to 
+      third parties (whether open source, proprietary, free, or paid)
+   c) Embedding the Licensed Work in products offered to third parties
+   
+   NOTE: Non-profit and not-for-profit organizations requiring OEM licenses 
+   for third-party offerings may contact sales@kernx.io for case-by-case 
+   evaluation and pricing.
 
-Subject to the text of this license, the Licensor grants you a 
-non-exclusive, worldwide, non-transferable license to Use the 
-Software for any purpose, EXCEPT for the "Excluded Purpose" defined below.
+Any production use by entities not meeting the Free Tier criteria requires 
+a valid commercial license.
 
-c. Excluded Purpose
+III. DEFINITIONS
+- "Production" means running the Licensed Work where it serves real user 
+  traffic, handles financial data, or supports business operations.
 
-The Excluded Purpose is:
-1. Offering the Software as a commercial "Managed Service" (e.g., "Kernx as a Service").
-2. Branding a commercial product where the primary value is the Software itself.
+- "Production Site" means a single logical deployment of the Licensed Work, 
+  regardless of the number of servers or instances. Multiple data centers 
+  or regions operated by the same entity count as separate sites.
 
-d. Change Date
+- "Licensor" means Siva (via Kernx.io).
 
-On the Change Date, the License Grant automatically converts to the 
-Change License (Apache 2.0).
+IV. CHANGE DATE
+On the Change Date (2030-01-31), the Licensor will re-license the Licensed 
+Work under the Change License (Apache 2.0).
 
-e. Disclaimer
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+V. NOTICE
+The Licensed Work is provided "AS IS", WITHOUT WARRANTY OF ANY KIND, express 
+or implied, including but not limited to the warranties of merchantability, 
+fitness for a particular purpose and noninfringement.

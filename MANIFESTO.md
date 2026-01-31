@@ -211,3 +211,7 @@ We acknowledge centralization has risks. That's why Kernx is **Source Available*
 **We are building the Engine.**
 
 **You build the Future.**
+
+---
+
+Ultimately, we chase efficiency for one simple reason: **To stop fighting fires, go home at 5, and spend time with the ones we love.**
