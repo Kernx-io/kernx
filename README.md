@@ -61,24 +61,41 @@ We have bundled the compiled kernel so you can run it instantly.
 
 ### 1. Ignite the Engine (Terminal A)
 
-Keep this terminal open.
-
 ```bash
 java --enable-preview -jar release/kernx-engine.jar
 ```
 
-**Output:** `[INFO] 🌍 HTTP Adapter listening on http://localhost:8080`
+**Output:** `[INFO] 🌍 HTTP Adapter listening on http://127.0.0.1:8080`
 
-### 2. Feel the Heartbeat (Terminal B)
+### 2. Monitor Vital Signs (Terminal B)
 
-Verify the system is alive using our built-in monitor.
+Watch the real-time throughput of the kernel.
 
 ```bash
-pip install requests
 python3 heartbeat.py
 ```
 
-**Output:** `[T+1s] THROUGHPUT: 24,500 req/s | STATUS: ALIVE`
+**Output:** `[T+1s] INSTANT: 0 req/s | STATUS: FLOWING 🟢`
+
+### 3. The "Widowmaker" Benchmark (Terminal C)
+
+Fire 50,000 requests to test the lock-free scheduler.
+
+```bash
+python3 benchmark.py
+```
+
+Watch Terminal B spike to 2,000+ req/sec.
+
+---
+
+**You are done debugging.**
+
+You have the Code.  
+You have the Binary.  
+You have the Benchmark.
+
+**Push it.**
 
 ---
 
@@ -108,7 +125,17 @@ k.block_hex("CAFEBABE")
 
 ---
 
-## 📊 Benchmarks (The "Widowmaker" Test)
+## 📊 Benchmarks & Performance
+
+### Performance by Client
+
+| Client | Throughput | Notes |
+| :--- | :--- | :--- |
+| **Python SDK** | ~2,500 req/s | Single-threaded, Developer friendly |
+| **Wrk (HTTP)** | **83,000+ req/s** | 12 threads, 400 connections, M1 Air |
+| **Internal** | ~66,000 ops/s | Direct memory access |
+
+### The "Widowmaker" Test
 
 Tested on Apple Silicon M1 (100,000 concurrent requests):
 
@@ -119,6 +146,12 @@ Tested on Apple Silicon M1 (100,000 concurrent requests):
 ⛔ Rejected: 0
 ```
 
+## ⚡ Performance
+| Client | Throughput | Notes |
+| :--- | :--- | :--- |
+| **Python SDK** | ~2,500 req/s | Single-threaded, Developer friendly |
+| **Wrk (HTTP)** | **83,000+ req/s** | 12 threads, 400 connections, M1 Air |
+| **Internal** | ~66,000 ops/s | Direct memory access |
 ---
 
 ## 📂 Project Structure
@@ -131,6 +164,7 @@ kernx-root/
 │   └── python/           # The Python Driver
 ├── kernx-core/           # The Java Source
 ├── heartbeat.py          # Vital Signs Monitor
+├── benchmark.py          # The Widowmaker Test
 └── MANIFESTO.md          # The Philosophy
 ```
 
